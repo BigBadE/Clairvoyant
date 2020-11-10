@@ -1,0 +1,10 @@
+dependencies {
+    implementation project(':engine')
+    implementation "com.sparkjava:spark-core:2.7.2"
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'software.bigbade.clairvoyant.engine.EngineTest'
+    }
+}
