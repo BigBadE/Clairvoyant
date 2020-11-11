@@ -2,6 +2,7 @@ package software.bigbade.clairvoyant.engine.game;
 
 import com.google.gson.JsonObject;
 import lombok.Getter;
+import lombok.Setter;
 import software.bigbade.clairvoyant.engine.BattlesnakeEngine;
 import software.bigbade.clairvoyant.engine.api.IBattlesnakePlayer;
 import software.bigbade.clairvoyant.engine.api.IJsonSerializable;
@@ -15,7 +16,6 @@ import java.util.UUID;
 
 @Getter
 public class BattlesnakeBoard implements IJsonSerializable {
-    @Getter
     private final Random random = new Random();
     private final Position size;
 
@@ -23,6 +23,7 @@ public class BattlesnakeBoard implements IJsonSerializable {
     private final List<Position> hazards = new ArrayList<>();
     private final List<Battlesnake> snakes = new ArrayList<>();
 
+    @Setter
     private boolean[][] board;
 
     public BattlesnakeBoard(Position size) {
@@ -51,13 +52,24 @@ public class BattlesnakeBoard implements IJsonSerializable {
         if(isStandardSize()) {
             for(Battlesnake snake : snakes) {
                 foods.add(GameMove.values()[random.nextInt(4)]
-                        .getRelative(GameMove.values()[random.nextInt(4)].getRelative(snake.getHead())));
+                        .getRelative(GameMove.values()[random.nextInt(4)].getRelative(snake.getState().getHead())));
             }
 
             foods.add(new Position(size.getX()/2, size.getY()/2));
         } else {
             placeFood(snakes.size());
         }
+    }
+
+
+    public void update(BattlesnakeState original, BattlesnakeState newState) {
+        for(Position position : original.getBody()) {
+            board[position.getX()][position.getY()] = false;
+        }
+        for(Position position : newState.getBody()) {
+            board[position.getX()][position.getY()] = true;
+        }
+        //Head to head logic omitted, used instead in StateEvaluator
     }
 
     public void update() {
@@ -67,18 +79,18 @@ public class BattlesnakeBoard implements IJsonSerializable {
         }
 
         for (Battlesnake snake : snakes) {
-            if(snake.isDead()) {
+            if(snake.getState().isDead()) {
                 continue;
             }
-            for (Position body : snake.getBody()) {
+            for (Position body : snake.getState().getBody()) {
                 board[body.getX()][body.getY()] = true;
             }
             for (Battlesnake other : snakes) {
-                if(other.isDead()) {
+                if(other.getState().isDead()) {
                     continue;
                 }
-                if (!snake.equals(other) && snake.getHead().equals(other.getHead())) {
-                    switch (Integer.compare(snake.getBody().size(), other.getBody().size())) {
+                if (!snake.equals(other) && snake.getState().getHead().equals(other.getState().getHead())) {
+                    switch (Integer.compare(snake.getState().getBody().size(), other.getState().getBody().size())) {
                         case 1:
                             other.kill();
                             break;
@@ -107,14 +119,14 @@ public class BattlesnakeBoard implements IJsonSerializable {
             charBoard[food.getY()][food.getX() * 2 + 1] = 'A';
         }
         for (Battlesnake battlesnake : snakes) {
-            if(battlesnake.isDead()) {
+            if(battlesnake.getState().isDead()) {
                 continue;
             }
-            for (int i = 0; i < battlesnake.getBody().size(); i++) {
-                Position body = battlesnake.getBody().get(i);
+            for (int i = 0; i < battlesnake.getState().getBody().size(); i++) {
+                Position body = battlesnake.getState().getBody().get(i);
                 charBoard[body.getY()][body.getX() * 2 + 1] = '@';
             }
-            charBoard[battlesnake.getHead().getY()][battlesnake.getHead().getX() * 2 + 1] = '#';
+            charBoard[battlesnake.getState().getHead().getY()][battlesnake.getState().getHead().getX() * 2 + 1] = '#';
         }
         for (Position hazard : hazards) {
             charBoard[hazard.getY()][hazard.getX() * 2 + 1] = 'H';
@@ -130,11 +142,11 @@ public class BattlesnakeBoard implements IJsonSerializable {
             snakes.add(new Battlesnake(UUID.randomUUID().toString(), players.get(i), i + 1));
         }
         for (int i = 0; i < players.size(); i++) {
-            snakes.get(i).setHead(new Position(size.getX()/(players.size()+1), size.getY() / 2));
+            snakes.get(i).getState().setHead(new Position(size.getX()/(players.size()+1), size.getY() / 2));
         }
         board = new boolean[size.getX()][size.getY()];
         for (Battlesnake battlesnake : snakes) {
-            board[battlesnake.getHead().getX()][battlesnake.getHead().getY()] = true;
+            board[battlesnake.getState().getHead().getX()][battlesnake.getState().getHead().getY()] = true;
         }
         //TODO
     }
@@ -142,7 +154,7 @@ public class BattlesnakeBoard implements IJsonSerializable {
     public boolean ended() {
         int alive = 0;
         for (Battlesnake snake : snakes) {
-            if (!snake.isDead()) {
+            if (!snake.getState().isDead()) {
                 alive++;
             }
         }

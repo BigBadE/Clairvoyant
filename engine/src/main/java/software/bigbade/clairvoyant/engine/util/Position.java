@@ -18,6 +18,11 @@ public class Position implements IJsonSerializable {
         this.y = y;
     }
 
+    public Position(Position position) {
+        this.x = position.x;
+        this.y = position.y;
+    }
+
     public double distanceSquared(Position other) {
         return Math.pow(x-other.getX(), 2)+Math.pow(y-other.getY(), 2);
     }

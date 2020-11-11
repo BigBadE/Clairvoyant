@@ -66,13 +66,13 @@ public class BattlesnakeEngine {
         for (int i = 0; i < board.getSnakes().size(); i++) {
             try {
                 GameMove move = moves[i].get(2, TimeUnit.SECONDS);
-                board.getSnakes().get(i).update(move, board);
+                board.getSnakes().get(i).update(move, board, true);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 e.printStackTrace();
             } catch (TimeoutException e) {
                 e.printStackTrace();
-                board.getSnakes().get(i).update(GameMove.UP, board);
+                board.getSnakes().get(i).update(GameMove.UP, board, true);
             } catch (ExecutionException e) {
                 e.printStackTrace();
             }
